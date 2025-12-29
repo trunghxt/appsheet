@@ -3,202 +3,1014 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard</title>
+  <title>Facebook Ads Analytics</title>
 
-  <!-- Chart.js CDN (theo docs) -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
-    :root{
-      --bg:#0b1020;
-      --card:#121a33;
-      --muted:#9aa4b2;
-      --text:#e8eefc;
-      --line:rgba(255,255,255,.08);
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    :root {
+      --primary: #2A6FFF;
+      --primary-light: #5A8EFF;
+      --primary-extra-light: #E8F0FF;
+      --secondary: #00C2A2;
+      --accent: #FF6B8B;
+      --warning: #FFA726;
+      --success: #4CAF50;
+      
+      --bg-main: #F8FAFC;
+      --bg-card: #FFFFFF;
+      --bg-hover: #F1F5F9;
+      --bg-sidebar: #1E293B;
+      
+      --text-primary: #1E293B;
+      --text-secondary: #64748B;
+      --text-muted: #94A3B8;
+      --text-light: #F8FAFC;
+      
+      --border: #E2E8F0;
+      --border-light: #F1F5F9;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.1);
+      --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+      
       --radius: 16px;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 10% 0%, rgba(80,120,255,.25), transparent 60%),
-                  radial-gradient(900px 500px at 90% 10%, rgba(0,200,180,.18), transparent 55%),
-                  var(--bg);
-      color:var(--text);
-    }
-    .wrap{max-width:1200px; margin:0 auto; padding:24px;}
-    .topbar{
-      display:flex; gap:12px; align-items:center; justify-content:space-between;
-      margin-bottom:18px;
-    }
-    .title{
-      display:flex; flex-direction:column; gap:4px;
-    }
-    .title h1{margin:0; font-size:20px; letter-spacing:.2px;}
-    .title .sub{color:var(--muted); font-size:12px;}
-    .actions{display:flex; gap:10px; align-items:center;}
-    .btn{
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.06);
-      color:var(--text);
-      padding:10px 12px;
-      border-radius:12px;
-      cursor:pointer;
-      box-shadow: var(--shadow);
-    }
-    .btn:hover{background: rgba(255,255,255,.10);}
-    .pill{
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.04);
-      padding:9px 12px;
-      border-radius:999px;
-      color:var(--muted);
-      font-size:12px;
-      display:flex; gap:8px; align-items:center;
-      max-width:520px;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
+      --radius-sm: 12px;
+      --radius-lg: 20px;
+      
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      --sidebar-width: 280px;
+      --topbar-height: 72px;
+      --gap: 20px;
+      --pad: 24px;
     }
 
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap:14px;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border:1px solid var(--line);
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--text-primary);
+    }
+
+    body {
+      background: var(--bg-main);
+      overflow: hidden;
+      line-height: 1.5;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--border-light);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-light);
+    }
+
+    /* App Layout */
+    .app-container {
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow);
+      z-index: 10;
+    }
+
+    .sidebar-header {
+      padding: 28px var(--pad) 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    }
+
+    .logo-text {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-section {
+      padding: 20px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-title {
+      padding: 0 var(--pad) 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px var(--pad);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 14px;
+      transition: var(--transition);
+      border-left: 3px solid transparent;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-hover);
+      color: var(--primary);
+    }
+
+    .nav-item.active {
+      background: var(--primary-extra-light);
+      color: var(--primary);
+      border-left-color: var(--primary);
+      font-weight: 600;
+    }
+
+    .nav-item i {
+      width: 20px;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: var(--pad);
+      border-top: 1px solid var(--border);
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+    }
+
+    .user-info h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .user-info p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Topbar */
+    .topbar {
+      height: var(--topbar-height);
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 var(--pad);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+      z-index: 5;
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-hover);
+      padding: 10px 16px;
+      border-radius: 12px;
+      width: 400px;
+      max-width: 100%;
+    }
+
+    .search-bar i {
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+
+    .search-bar input {
+      border: none;
+      background: transparent;
+      flex: 1;
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+    }
+
+    .search-bar input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .action-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      background: var(--bg-hover);
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .action-btn:hover {
+      background: var(--primary);
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    .badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: var(--accent);
+      color: white;
+      font-size: 10px;
+      font-weight: 600;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Content Area */
+    .content-area {
+      flex: 1;
+      overflow: auto;
+      padding: var(--pad);
+    }
+
+    .content-header {
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .page-subtitle i {
+      color: var(--success);
+    }
+
+    /* KPI Cards Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--gap);
+      margin-bottom: 30px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-hover);
+      border-color: var(--primary-light);
+    }
+
+    .kpi-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .kpi-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .kpi-card:nth-child(1) .kpi-icon {
+      background: rgba(42, 111, 255, 0.1);
+      color: var(--primary);
+    }
+
+    .kpi-card:nth-child(2) .kpi-icon {
+      background: rgba(255, 107, 139, 0.1);
+      color: var(--accent);
+    }
+
+    .kpi-card:nth-child(3) .kpi-icon {
+      background: rgba(0, 194, 162, 0.1);
+      color: var(--secondary);
+    }
+
+    .kpi-card:nth-child(4) .kpi-icon {
+      background: rgba(255, 167, 38, 0.1);
+      color: var(--warning);
+    }
+
+    .trend-badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .trend-up {
+      background: rgba(76, 175, 80, 0.1);
+      color: var(--success);
+    }
+
+    .trend-down {
+      background: rgba(255, 107, 139, 0.1);
+      color: var(--accent);
+    }
+
+    .kpi-content h3 {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      letter-spacing: -0.5px;
+    }
+
+    .kpi-content p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .kpi-footer {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Charts Grid */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--gap);
+      margin-bottom: 30px;
+    }
+
+    .chart-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 0;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .chart-card:hover {
+      box-shadow: var(--shadow-hover);
+    }
+
+    .chart-header {
+      padding: 24px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chart-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .chart-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .chart-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .chart-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-hover);
+      color: var(--text-secondary);
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .chart-btn:hover {
+      background: var(--primary);
+      color: white;
+    }
+
+    .chart-body {
+      padding: 20px 24px 24px;
+      height: 320px;
+    }
+
+    /* Table Section */
+    .table-section {
+      background: var(--bg-card);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-    }
-    .card .hd{
-      padding:14px 16px;
-      border-bottom:1px solid var(--line);
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-    }
-    .card .hd .h{font-weight:600; font-size:13px;}
-    .card .hd .m{color:var(--muted); font-size:12px;}
-    .card .bd{padding:14px 16px;}
-    .kpi{
-      padding:14px 16px;
-      display:flex; flex-direction:column; gap:6px;
-    }
-    .kpi .name{color:var(--muted); font-size:12px;}
-    .kpi .val{font-size:22px; font-weight:700;}
-    .kpi .hint{color:var(--muted); font-size:12px;}
-    .span-3{grid-column: span 3;}
-    .span-4{grid-column: span 4;}
-    .span-6{grid-column: span 6;}
-    .span-12{grid-column: span 12;}
-
-    .chartBox{height:340px;}
-    canvas{width:100% !important; height:100% !important;}
-
-    table{
-      width:100%;
-      border-collapse:collapse;
-      font-size:12px;
-    }
-    th, td{
-      padding:10px 10px;
-      border-bottom:1px solid var(--line);
-      text-align:left;
-      vertical-align:top;
-    }
-    th{color:var(--muted); font-weight:600;}
-    .note{color:var(--muted); font-size:12px; line-height:1.5;}
-    .error{
-      padding:12px 14px;
-      border-radius:12px;
-      background: rgba(255,90,90,.12);
-      border:1px solid rgba(255,90,90,.25);
-      color:#ffd7d7;
-      margin-top:12px;
-      white-space:pre-wrap;
+      border: 1px solid var(--border);
+      overflow: hidden;
     }
 
-    @media (max-width: 1000px){
-      .span-3{grid-column: span 6;}
-      .span-6{grid-column: span 12;}
-      .span-4{grid-column: span 12;}
-      .topbar{flex-direction:column; align-items:flex-start;}
-      .actions{width:100%; justify-content:flex-start; flex-wrap:wrap;}
-      .pill{max-width:100%;}
+    .table-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .table-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .table-count {
+      background: var(--primary-extra-light);
+      color: var(--primary);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .table-container {
+      padding: 0 24px 24px;
+    }
+
+    .table-note {
+      background: var(--bg-hover);
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      border-left: 4px solid var(--primary);
+    }
+
+    .table-note i {
+      color: var(--primary);
+      margin-right: 8px;
+    }
+
+    .table-wrapper {
+      overflow: auto;
+      max-height: 400px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      min-width: 1000px;
+    }
+
+    th {
+      background: var(--bg-hover);
+      padding: 16px;
+      text-align: left;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid var(--border);
+      position: sticky;
+      top: 0;
+    }
+
+    td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+
+    tr:hover {
+      background: var(--bg-hover);
+    }
+
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    .status-active {
+      background: rgba(76, 175, 80, 0.1);
+      color: var(--success);
+    }
+
+    .status-paused {
+      background: rgba(255, 107, 139, 0.1);
+      color: var(--accent);
+    }
+
+    /* Error Box */
+    .error-box {
+      background: rgba(255, 107, 139, 0.1);
+      border: 1px solid rgba(255, 107, 139, 0.2);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      margin-top: 16px;
+      font-size: 13px;
+      color: #dc2626;
+      white-space: pre-wrap;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1400px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .sidebar {
+        width: 80px;
+      }
+      
+      .logo-text, .nav-title, .user-info, .logo-sub {
+        display: none;
+      }
+      
+      .sidebar-header {
+        padding: 20px;
+      }
+      
+      .nav-item span {
+        display: none;
+      }
+      
+      .nav-item {
+        justify-content: center;
+        padding: 16px;
+      }
+      
+      .search-bar {
+        width: 300px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        left: -280px;
+        transition: var(--transition);
+      }
+      
+      .sidebar.active {
+        left: 0;
+      }
+      
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .search-bar {
+        width: 200px;
+      }
+      
+      .topbar-actions {
+        gap: 8px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      :root {
+        --pad: 16px;
+        --gap: 16px;
+      }
+      
+      .content-area {
+        padding: 16px;
+      }
+      
+      .page-title {
+        font-size: 24px;
+      }
+      
+      .kpi-content h3 {
+        font-size: 28px;
+      }
+      
+      .chart-body {
+        height: 250px;
+      }
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .kpi-card, .chart-card, .table-section {
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .kpi-card:nth-child(2) { animation-delay: 0.1s; }
+    .kpi-card:nth-child(3) { animation-delay: 0.2s; }
+    .kpi-card:nth-child(4) { animation-delay: 0.3s; }
+    .chart-card:nth-child(2) { animation-delay: 0.4s; }
+    .table-section { animation-delay: 0.5s; }
+
+    /* Loading Animation */
+    .loading {
+      display: inline-block;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="title">
-        <h1>Dashboard Report</h1>
-        <div class="sub" id="subtitle">Loading…</div>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <a href="#" class="logo">
+          <div class="logo-icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <div>
+            <div class="logo-text">Ads Analytics</div>
+            <div class="logo-sub">Dashboard</div>
+          </div>
+        </a>
       </div>
-      <div class="actions">
-        <div class="pill" id="apiPill">API: (chưa set)</div>
-        <button class="btn" id="btnReload">Reload</button>
+
+      <div class="nav-section">
+        <div class="nav-title">MAIN</div>
+        <a href="#" class="nav-item active">
+          <i class="fas fa-home"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item">
+          <i class="fas fa-chart-bar"></i>
+          <span>Analytics</span>
+        </a>
+        <a href="#" class="nav-item">
+          <i class="fas fa-bullhorn"></i>
+          <span>Campaigns</span>
+        </a>
+        <a href="#" class="nav-item">
+          <i class="fas fa-users"></i>
+          <span>Audience</span>
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-title">TOOLS</div>
+        <a href="#" class="nav-item">
+          <i class="fas fa-cog"></i>
+          <span>Settings</span>
+        </a>
+        <a href="#" class="nav-item">
+          <i class="fas fa-download"></i>
+          <span>Export Data</span>
+        </a>
+        <a href="#" class="nav-item">
+          <i class="fas fa-question-circle"></i>
+          <span>Help & Support</span>
+        </a>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="user-avatar">AD</div>
+          <div class="user-info">
+            <h4>Admin User</h4>
+            <p>Facebook Ads Manager</p>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="grid">
-      <!-- KPI -->
-      <div class="card span-3 kpi">
-        <div class="name">Tổng chi phí</div>
-        <div class="val" id="kpiSpend">—</div>
-        <div class="hint" id="kpiSpendHint">—</div>
-      </div>
-      <div class="card span-3 kpi">
-        <div class="name">Tổng doanh thu</div>
-        <div class="val" id="kpiRevenue">—</div>
-        <div class="hint" id="kpiRevenueHint">—</div>
-      </div>
-      <div class="card span-3 kpi">
-        <div class="name">Đơn hàng</div>
-        <div class="val" id="kpiOrders">—</div>
-        <div class="hint" id="kpiOrdersHint">—</div>
-      </div>
-      <div class="card span-3 kpi">
-        <div class="name">ROAS</div>
-        <div class="val" id="kpiRoas">—</div>
-        <div class="hint">Doanh thu / Chi phí</div>
-      </div>
-
-      <!-- Charts -->
-      <div class="card span-6">
-        <div class="hd">
-          <div class="h">Xu hướng theo ngày</div>
-          <div class="m">Spend vs Revenue</div>
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Topbar -->
+      <div class="topbar">
+        <div class="search-bar">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search campaigns, ads, or metrics...">
         </div>
-        <div class="bd">
-          <div class="chartBox"><canvas id="trendChart"></canvas></div>
+
+        <div class="topbar-actions">
+          <button class="action-btn" title="Notifications">
+            <i class="fas fa-bell"></i>
+            <span class="badge">3</span>
+          </button>
+          <button class="action-btn" title="Settings">
+            <i class="fas fa-cog"></i>
+          </button>
+          <button class="action-btn" title="Refresh" id="btnReload">
+            <i class="fas fa-sync-alt"></i>
+          </button>
+          <div class="pill" id="apiPill" style="display: none"></div>
         </div>
       </div>
 
-      <div class="card span-6">
-        <div class="hd">
-          <div class="h">Top items</div>
-          <div class="m">Theo doanh thu</div>
-        </div>
-        <div class="bd">
-          <div class="chartBox"><canvas id="topChart"></canvas></div>
-        </div>
-      </div>
-
-      <!-- Table -->
-      <div class="card span-12">
-        <div class="hd">
-          <div class="h">Dữ liệu thô (20 dòng đầu)</div>
-          <div class="m" id="rowCount">—</div>
-        </div>
-        <div class="bd">
-          <div class="note">
-            Nếu chart chưa đúng: hãy chỉnh mapping cột trong biến <b>FIELDS</b> bên dưới cho khớp JSON của bạn.
+      <!-- Content Area -->
+      <div class="content-area">
+        <div class="content-header">
+          <h1 class="page-title">Facebook Ads Dashboard</h1>
+          <div class="page-subtitle" id="subtitle">
+            <i class="fas fa-circle"></i> Loading real-time data...
           </div>
-          <div id="errBox"></div>
-          <div style="overflow:auto; margin-top:10px;">
-            <table id="dataTable"></table>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <div class="kpi-icon">
+                <i class="fas fa-money-bill-wave"></i>
+              </div>
+              <div class="trend-badge trend-up">
+                <i class="fas fa-arrow-up"></i>
+                12.5%
+              </div>
+            </div>
+            <div class="kpi-content">
+              <h3 id="kpiSpend">—</h3>
+              <p>Tổng chi phí</p>
+              <div class="kpi-footer">
+                <i class="fas fa-info-circle"></i> VND (tổng cộng)
+              </div>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <div class="kpi-icon">
+                <i class="fas fa-eye"></i>
+              </div>
+              <div class="trend-badge trend-up">
+                <i class="fas fa-arrow-up"></i>
+                8.2%
+              </div>
+            </div>
+            <div class="kpi-content">
+              <h3 id="kpiImpressions">—</h3>
+              <p>Lượt hiển thị</p>
+              <div class="kpi-footer">
+                <i class="fas fa-chart-line"></i> Tổng số lượt
+              </div>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <div class="kpi-icon">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="trend-badge trend-up">
+                <i class="fas fa-arrow-up"></i>
+                5.7%
+              </div>
+            </div>
+            <div class="kpi-content">
+              <h3 id="kpiReach">—</h3>
+              <p>Người tiếp cận</p>
+              <div class="kpi-footer">
+                <i class="fas fa-user-check"></i> Unique users
+              </div>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-header">
+              <div class="kpi-icon">
+                <i class="fas fa-mouse-pointer"></i>
+              </div>
+              <div class="trend-badge trend-up">
+                <i class="fas fa-arrow-up"></i>
+                15.3%
+              </div>
+            </div>
+            <div class="kpi-content">
+              <h3 id="kpiClicks">—</h3>
+              <p>Clicks (link)</p>
+              <div class="kpi-footer">
+                <i class="fas fa-hand-pointer"></i> Link clicks
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">Xu hướng theo ngày</div>
+                <div class="chart-subtitle">Chi phí & Lượt hiển thị</div>
+              </div>
+              <div class="chart-actions">
+                <button class="chart-btn" title="Zoom">
+                  <i class="fas fa-search-plus"></i>
+                </button>
+                <button class="chart-btn" title="Download">
+                  <i class="fas fa-download"></i>
+                </button>
+              </div>
+            </div>
+            <div class="chart-body">
+              <canvas id="trendChart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <div class="chart-title">Top Campaign</div>
+                <div class="chart-subtitle">Theo chi phí</div>
+              </div>
+              <div class="chart-actions">
+                <button class="chart-btn" title="Zoom">
+                  <i class="fas fa-search-plus"></i>
+                </button>
+                <button class="chart-btn" title="Download">
+                  <i class="fas fa-download"></i>
+                </button>
+              </div>
+            </div>
+            <div class="chart-body">
+              <canvas id="topChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-section">
+          <div class="table-header">
+            <div>
+              <div class="table-title">Dữ liệu thô (20 dòng đầu)</div>
+              <div class="table-subtitle" id="rowCount">Đang tải dữ liệu...</div>
+            </div>
+            <div class="table-count" id="rowCountBadge">—</div>
+          </div>
+          
+          <div class="table-container">
+            <div class="table-note">
+              <i class="fas fa-lightbulb"></i>
+              Nếu KPI/Chart vẫn = 0: do tên cột trong JSON khác. Lúc đó xem phần lỗi (nếu có) hoặc gửi tôi 1 dòng JSON mẫu.
+            </div>
+            
+            <div id="errBox"></div>
+            
+            <div class="table-wrapper">
+              <table id="dataTable"></table>
+            </div>
           </div>
         </div>
       </div>
@@ -206,27 +1018,40 @@
   </div>
 
 <script>
-  // 1) DÁN URL /exec CỦA BẠN VÀO ĐÂY
-  const API_URL = "PASTE_YOUR_APPS_SCRIPT_EXEC_URL_HERE";
+  // =============================
+  // Configuration
+  // =============================
+  const API_URL = "https://script.google.com/macros/s/AKfycbydECEVLnClp9wV5eUbTiFGX-GFmVtja-4HhW3aa1-ffpLFFNS4i3_4PBkNm5Pm2URzuA/exec?limit=5000";
 
-  // 2) MAP CỘT DỮ LIỆU (đổi theo JSON thực tế của bạn)
-  // Ví dụ JSON mỗi row có: { date: "2025-12-29", spend: 120, revenue: 560, orders: 3, item: "ASIN/Name" }
-  const FIELDS = {
-    date:    ["date", "Date", "ngay", "Ngày", "day"],
-    spend:   ["spend", "Spend", "cost", "Cost", "Chi phí", "chi_phi"],
-    revenue: ["revenue", "Revenue", "sales", "Sales", "Doanh thu", "doanh_thu"],
-    orders:  ["orders", "Orders", "order", "Đơn", "don_hang"],
-    item:    ["item", "Item", "asin", "ASIN", "name", "Name", "Tên"]
-  };
-
-  // ----- helpers
+  // =============================
+  // Helpers
+  // =============================
   const $ = (id) => document.getElementById(id);
 
-  function pickField(obj, keys){
-    for (const k of keys){
-      if (obj && Object.prototype.hasOwnProperty.call(obj, k)) return obj[k];
+  function stripDiacritics(s){
+    return String(s || "")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
+  }
+
+  function findKey(obj, candidates){
+    const keys = Object.keys(obj || {});
+    const normMap = new Map(keys.map(k => [stripDiacritics(k), k]));
+
+    for (const c of candidates){
+      if (c.eq){
+        const k = normMap.get(stripDiacritics(c.eq));
+        if (k) return k;
+      }
+      if (c.has){
+        const need = c.has.map(stripDiacritics);
+        for (const k of keys){
+          const nk = stripDiacritics(k);
+          if (need.every(x => nk.includes(x))) return k;
+        }
+      }
     }
-    return undefined;
+    return null;
   }
 
   function normalizeRows(json){
@@ -247,16 +1072,12 @@
   }
 
   function toDayKey(v){
-    // chấp nhận: YYYY-MM-DD, DD/MM/YYYY, ISO string...
     if (!v) return null;
     const s = String(v).trim();
     let d = new Date(s);
     if (isNaN(d.getTime())){
-      // thử DD/MM/YYYY
       const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-      if (m){
-        d = new Date(Number(m[3]), Number(m[2])-1, Number(m[1]));
-      }
+      if (m) d = new Date(Number(m[3]), Number(m[2])-1, Number(m[1]));
     }
     if (isNaN(d.getTime())) return null;
     const yyyy = d.getFullYear();
@@ -270,13 +1091,15 @@
   }
 
   function setError(msg){
-    $("errBox").innerHTML = msg ? `<div class="error">${msg}</div>` : "";
+    $("errBox").innerHTML = msg ? `<div class="error-box">${msg}</div>` : "";
   }
 
-  // ----- charts
+  // =============================
+  // Chart.js
+  // =============================
   let trendChart, topChart;
 
-  function renderTrend(labels, spendArr, revArr){
+  function renderTrend(labels, spendArr, impArr){
     const ctx = $("trendChart");
     if (trendChart) trendChart.destroy();
 
@@ -285,8 +1108,34 @@
       data: {
         labels,
         datasets: [
-          { label: "Spend", data: spendArr, tension: 0.25 },
-          { label: "Revenue", data: revArr, tension: 0.25 }
+          { 
+            label: "Chi phí (VND)", 
+            data: spendArr, 
+            tension: 0.4,
+            borderColor: '#2A6FFF',
+            backgroundColor: 'rgba(42, 111, 255, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            pointBackgroundColor: '#2A6FFF',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          },
+          { 
+            label: "Lượt hiển thị", 
+            data: impArr, 
+            tension: 0.4,
+            borderColor: '#FF6B8B',
+            backgroundColor: 'rgba(255, 107, 139, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            pointBackgroundColor: '#FF6B8B',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }
         ]
       },
       options: {
@@ -294,16 +1143,43 @@
         maintainAspectRatio: false,
         interaction: { mode: "index", intersect: false },
         plugins: {
-          legend: { labels: { color: "#e8eefc" } },
+          legend: { 
+            labels: { 
+              color: "#1E293B",
+              font: { size: 13 },
+              padding: 20
+            },
+            position: 'top'
+          },
           tooltip: {
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            titleColor: '#1E293B',
+            bodyColor: '#1E293B',
+            borderColor: '#2A6FFF',
+            borderWidth: 1,
+            cornerRadius: 8,
+            padding: 12,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
             callbacks: {
-              label: (ctx) => `${ctx.dataset.label}: ${fmtMoney(ctx.raw)}`
+              label: (c) => {
+                const v = c.raw ?? 0;
+                if (c.dataset.label.includes("Chi phí")) return `${c.dataset.label}: ${fmtMoney(v)} VND`;
+                return `${c.dataset.label}: ${fmtMoney(v)}`;
+              }
             }
           }
         },
         scales: {
-          x: { ticks: { color: "#9aa4b2" }, grid: { color: "rgba(255,255,255,.06)" } },
-          y: { ticks: { color: "#9aa4b2", callback: (v)=>fmtMoney(v) }, grid: { color: "rgba(255,255,255,.06)" } }
+          x: { 
+            ticks: { color: "#64748B", font: { size: 11 } }, 
+            grid: { color: "#F1F5F9" },
+            border: { color: "#E2E8F0" }
+          },
+          y: { 
+            ticks: { color: "#64748B", font: { size: 11 } }, 
+            grid: { color: "#F1F5F9" },
+            border: { color: "#E2E8F0" }
+          }
         }
       }
     });
@@ -317,22 +1193,49 @@
       type: "bar",
       data: {
         labels,
-        datasets: [
-          { label: "Revenue", data: values, borderWidth: 1 }
-        ]
+        datasets: [{ 
+          label: "Chi phí (VND)", 
+          data: values, 
+          backgroundColor: 'rgba(42, 111, 255, 0.8)',
+          borderColor: '#2A6FFF',
+          borderWidth: 1,
+          borderRadius: 6,
+          hoverBackgroundColor: '#5A8EFF'
+        }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        indexAxis: 'y',
         plugins: {
-          legend: { labels: { color: "#e8eefc" } },
+          legend: { 
+            display: false
+          },
           tooltip: {
-            callbacks: { label: (ctx) => `Revenue: ${fmtMoney(ctx.raw)}` }
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            titleColor: '#1E293B',
+            bodyColor: '#1E293B',
+            borderColor: '#2A6FFF',
+            borderWidth: 1,
+            cornerRadius: 8,
+            padding: 12,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            callbacks: {
+              label: (c) => `Chi phí: ${fmtMoney(c.raw ?? 0)} VND`
+            }
           }
         },
         scales: {
-          x: { ticks: { color: "#9aa4b2" }, grid: { display: false } },
-          y: { ticks: { color: "#9aa4b2", callback: (v)=>fmtMoney(v) }, grid: { color: "rgba(255,255,255,.06)" } }
+          x: { 
+            ticks: { color: "#64748B", font: { size: 11 } }, 
+            grid: { color: "#F1F5F9" },
+            border: { color: "#E2E8F0" }
+          },
+          y: { 
+            ticks: { color: "#64748B", font: { size: 11 } }, 
+            grid: { display: false },
+            border: { color: "#E2E8F0" }
+          }
         }
       }
     });
@@ -342,11 +1245,11 @@
     const table = $("dataTable");
     table.innerHTML = "";
     if (!rows.length){
-      table.innerHTML = "<tr><td>Không có dữ liệu</td></tr>";
+      table.innerHTML = "<tr><td colspan='10' style='text-align:center;padding:40px;color:#64748B;'>Không có dữ liệu</td></tr>";
       return;
     }
-
     const keys = Object.keys(rows[0]);
+
     const thead = document.createElement("thead");
     const trh = document.createElement("tr");
     keys.forEach(k => {
@@ -361,8 +1264,26 @@
       const tr = document.createElement("tr");
       keys.forEach(k => {
         const td = document.createElement("td");
-        const v = r[k];
-        td.textContent = (v === null || v === undefined) ? "" : String(v);
+        const value = (r[k] === null || r[k] === undefined) ? "" : String(r[k]);
+        
+        if (k.toLowerCase().includes("status") || k.toLowerCase().includes("trạng thái")) {
+          const lowerVal = value.toLowerCase();
+          if (lowerVal.includes("active") || lowerVal.includes("hoạt động")) {
+            td.innerHTML = `<span class="status-badge status-active">${value}</span>`;
+          } else if (lowerVal.includes("paused") || lowerVal.includes("dừng")) {
+            td.innerHTML = `<span class="status-badge status-paused">${value}</span>`;
+          } else {
+            td.textContent = value;
+          }
+        } else if (k.toLowerCase().includes("chi phí") || k.toLowerCase().includes("spend")) {
+          const num = toNumber(value);
+          td.textContent = fmtMoney(num) + " VND";
+          td.style.fontWeight = "600";
+          td.style.color = "var(--primary)";
+        } else {
+          td.textContent = value;
+        }
+        
         tr.appendChild(td);
       });
       tbody.appendChild(tr);
@@ -372,89 +1293,205 @@
     table.appendChild(tbody);
   }
 
-  // ----- main load
+  // =============================
+  // Main load
+  // =============================
   async function load(){
-    $("apiPill").textContent = "API: " + API_URL;
+    $("apiPill").textContent = `API: ${API_URL}`;
     setError("");
+    
+    // Update UI for loading
+    $("subtitle").innerHTML = `<i class="fas fa-circle loading" style="color:#2A6FFF"></i> Đang tải dữ liệu...`;
+    $("rowCount").textContent = "Đang tải...";
+    $("rowCountBadge").textContent = "—";
 
     if (!API_URL || API_URL.includes("PASTE_")){
-      setError("Bạn chưa dán API_URL (/exec) vào index.html.");
+      setError("Bạn chưa cấu hình API_URL. Vui lòng dán URL /exec vào biến API_URL.");
+      $("subtitle").innerHTML = `<i class="fas fa-exclamation-triangle" style="color:#FF6B8B"></i> Chưa cấu hình API`;
       return;
     }
 
-    $("subtitle").textContent = "Đang tải dữ liệu…";
-
     try{
       const res = await fetch(API_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error("HTTP " + res.status);
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       const json = await res.json();
-
       const rows = normalizeRows(json);
-      $("rowCount").textContent = `${rows.length} rows`;
 
-      // Parse rows -> metrics
-      let spendTotal = 0, revTotal = 0, ordersTotal = 0;
-      const byDay = new Map();      // day -> {spend, rev}
-      const byItem = new Map();     // item -> revenue
+      $("rowCount").textContent = `${rows.length} dòng được tải`;
+      $("rowCountBadge").textContent = `${rows.length} rows`;
+      renderTable(rows);
 
-      for (const r of rows){
-        const day = toDayKey(pickField(r, FIELDS.date));
-        const spend = toNumber(pickField(r, FIELDS.spend));
-        const rev = toNumber(pickField(r, FIELDS.revenue));
-        const orders = toNumber(pickField(r, FIELDS.orders));
-        const item = pickField(r, FIELDS.item) ?? "Unknown";
-
-        spendTotal += spend;
-        revTotal += rev;
-        ordersTotal += orders;
-
-        if (day){
-          const cur = byDay.get(day) || { spend:0, rev:0 };
-          cur.spend += spend;
-          cur.rev += rev;
-          byDay.set(day, cur);
-        }
-        byItem.set(String(item), (byItem.get(String(item)) || 0) + rev);
+      if (!rows.length){
+        setError("API trả về 0 dòng dữ liệu.");
+        $("subtitle").innerHTML = `<i class="fas fa-exclamation-circle" style="color:#FFA726"></i> Không có dữ liệu`;
+        return;
       }
 
-      // KPIs
+      // Auto-detect key theo dữ liệu FB Ads tiếng Việt
+      const sample = rows[0];
+
+      const KEY_DATE = findKey(sample, [
+        { eq: "Bắt đầu báo cáo" },
+        { has: ["bat","dau","bao","cao"] }
+      ]);
+
+      const KEY_SPEND = findKey(sample, [
+        { eq: "Chi phí (tất cả) (VND)" },
+        { eq: "Chi phí (VND)" },
+        { has: ["chi","phi","vnd"] }
+      ]);
+
+      const KEY_IMP = findKey(sample, [
+        { eq: "Lượt hiển thị" },
+        { has: ["luot","hien","thi"] }
+      ]);
+
+      const KEY_REACH = findKey(sample, [
+        { eq: "Người tiếp cận" },
+        { has: ["nguoi","tiep","can"] }
+      ]);
+
+      const KEY_CLICKS = findKey(sample, [
+        { eq: "Số lần nhấp vào liên kết" },
+        { has: ["nhap","lien","ket"] }
+      ]);
+
+      const KEY_CAMPAIGN = findKey(sample, [
+        { eq: "Tên chiến dịch" },
+        { has: ["ten","chien","dich"] }
+      ]);
+
+      // Nếu thiếu key => báo ngay để bạn biết cần map cứng
+      if (!KEY_DATE || !KEY_SPEND){
+        setError(
+          "Không detect được cột bắt buộc.\n" +
+          `DATE: ${KEY_DATE}\nSPEND: ${KEY_SPEND}\nIMP: ${KEY_IMP}\nREACH: ${KEY_REACH}\nCLICKS: ${KEY_CLICKS}\nCAMPAIGN: ${KEY_CAMPAIGN}\n\n` +
+          "=> Hãy copy đúng tên cột từ bảng dưới và gửi tôi, tôi map cứng 100%."
+        );
+      }
+
+      // Tính KPI + chart
+      let spendTotal=0, impTotal=0, reachTotal=0, clicksTotal=0;
+      const byDay = new Map();        // day -> {spend, imp}
+      const byCampaign = new Map();   // campaign -> spend
+
+      for (const r of rows){
+        const day = toDayKey(KEY_DATE ? r[KEY_DATE] : null);
+
+        const spend = toNumber(KEY_SPEND ? r[KEY_SPEND] : 0);
+        const imp   = toNumber(KEY_IMP ? r[KEY_IMP] : 0);
+        const reach = toNumber(KEY_REACH ? r[KEY_REACH] : 0);
+        const clicks= toNumber(KEY_CLICKS ? r[KEY_CLICKS] : 0);
+        const camp  = (KEY_CAMPAIGN ? r[KEY_CAMPAIGN] : "Unknown") ?? "Unknown";
+
+        spendTotal += spend;
+        impTotal += imp;
+        reachTotal += reach;
+        clicksTotal += clicks;
+
+        if (day){
+          const cur = byDay.get(day) || { spend:0, imp:0 };
+          cur.spend += spend;
+          cur.imp += imp;
+          byDay.set(day, cur);
+        }
+
+        const campName = String(camp);
+        byCampaign.set(campName, (byCampaign.get(campName) || 0) + spend);
+      }
+
       $("kpiSpend").textContent = fmtMoney(spendTotal);
-      $("kpiRevenue").textContent = fmtMoney(revTotal);
-      $("kpiOrders").textContent = fmtMoney(ordersTotal);
-      $("kpiRoas").textContent = spendTotal > 0 ? (revTotal / spendTotal).toFixed(2) : "—";
-      $("kpiSpendHint").textContent = "VNĐ (sum)";
-      $("kpiRevenueHint").textContent = "VNĐ (sum)";
-      $("kpiOrdersHint").textContent = "Tổng";
+      $("kpiImpressions").textContent = fmtMoney(impTotal);
+      $("kpiReach").textContent = fmtMoney(reachTotal);
+      $("kpiClicks").textContent = fmtMoney(clicksTotal);
 
-      // Trend chart (sorted by day)
+      // Trend
       const days = Array.from(byDay.keys()).sort();
-      const spendArr = days.map(d => byDay.get(d).spend);
-      const revArr = days.map(d => byDay.get(d).rev);
-      renderTrend(days, spendArr, revArr);
+      renderTrend(days, days.map(d=>byDay.get(d).spend), days.map(d=>byDay.get(d).imp));
 
-      // Top items chart (top 10)
-      const top = Array.from(byItem.entries())
+      // Top campaign
+      const top = Array.from(byCampaign.entries())
         .sort((a,b)=>b[1]-a[1])
         .slice(0,10);
       renderTop(top.map(x=>x[0]), top.map(x=>x[1]));
 
-      renderTable(rows);
-
       const now = new Date();
-      $("subtitle").textContent = `Cập nhật: ${now.toLocaleString("vi-VN")}`;
+      $("subtitle").innerHTML = 
+        `<i class="fas fa-check-circle" style="color:#00C2A2"></i> Cập nhật: ${now.toLocaleString("vi-VN")} • ${rows.length} dòng`;
 
     }catch(err){
-      setError(
-        "Fetch lỗi: " + err.message +
-        "\n\nNếu bạn thấy lỗi CORS trong Console: chuyển sang JSONP (tôi sẽ đưa đúng 2 đoạn code Apps Script + index.html)."
-      );
-      $("subtitle").textContent = "Lỗi tải dữ liệu";
+      setError("Lỗi khi tải dữ liệu: " + err.message);
+      $("subtitle").innerHTML = `<i class="fas fa-exclamation-triangle" style="color:#FF6B8B"></i> Lỗi tải dữ liệu`;
       console.error(err);
     }
   }
 
-  $("btnReload").addEventListener("click", load);
-  load();
+  // =============================
+  // Event Listeners
+  // =============================
+  $("btnReload").addEventListener("click", function() {
+    const icon = this.querySelector("i");
+    const originalClass = icon.className;
+    
+    // Add loading animation
+    icon.className = "fas fa-sync-alt fa-spin";
+    this.style.pointerEvents = "none";
+    
+    load().finally(() => {
+      setTimeout(() => {
+        icon.className = originalClass;
+        this.style.pointerEvents = "auto";
+      }, 500);
+    });
+  });
+
+  // Add click effects to chart buttons
+  document.querySelectorAll('.chart-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      this.style.transform = 'scale(0.95)';
+      setTimeout(() => {
+        this.style.transform = '';
+      }, 200);
+    });
+  });
+
+  // Add hover effect to KPI cards
+  document.querySelectorAll('.kpi-card').forEach(card => {
+    card.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateY(-4px)';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+      this.style.transform = '';
+    });
+  });
+
+  // Initialize
+  window.addEventListener('DOMContentLoaded', () => {
+    load();
+    
+    // Simulate sidebar toggle for mobile
+    const menuToggle = document.createElement('button');
+    menuToggle.className = 'action-btn';
+    menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+    menuToggle.style.marginRight = '8px';
+    menuToggle.addEventListener('click', () => {
+      document.querySelector('.sidebar').classList.toggle('active');
+    });
+    
+    // Only add on mobile
+    if (window.innerWidth <= 768) {
+      document.querySelector('.topbar-actions').prepend(menuToggle);
+    }
+  });
+
+  // Responsive adjustments
+  window.addEventListener('resize', () => {
+    const sidebar = document.querySelector('.sidebar');
+    if (window.innerWidth > 768) {
+      sidebar.classList.remove('active');
+    }
+  });
 </script>
 </body>
 </html>
