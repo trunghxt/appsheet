@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Dashboard</title>
+</head>
+<body>
+  <h1>Dashboard</h1>
+  <pre id="out">Loading...</pre>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbxXqmS9g1WrDxnkb5RxPnjGYra2P7ysr98WGcgE6c89P_nSCChY2ENvBB__lXdVGYBLiw/exec";
+
+    async function load() {
+      try {
+        const res = await fetch(API_URL, { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        document.getElementById("out").textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        document.getElementById("out").textContent =
+          "FETCH ERROR: " + err.message + "\n\nNếu báo CORS → dùng cách JSONP bên dưới.";
+        console.error(err);
+      }
+    }
+
+    load();
+    // Nếu muốn tự refresh mỗi 5 phút:
+    // setInterval(load, 5 * 60 * 1000);
+  </script>
+</body>
+</html>
