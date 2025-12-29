@@ -1,32 +1,460 @@
 <!doctype html>
-<html>
+<html lang="vi">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dashboard</title>
-</head>
-<body>
-  <h1>Dashboard</h1>
-  <pre id="out">Loading...</pre>
 
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbxXqmS9g1WrDxnkb5RxPnjGYra2P7ysr98WGcgE6c89P_nSCChY2ENvBB__lXdVGYBLiw/exec";
+  <!-- Chart.js CDN (theo docs) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    async function load() {
-      try {
-        const res = await fetch(API_URL, { cache: "no-store" });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const data = await res.json();
-        document.getElementById("out").textContent = JSON.stringify(data, null, 2);
-      } catch (err) {
-        document.getElementById("out").textContent =
-          "FETCH ERROR: " + err.message + "\n\nNếu báo CORS → dùng cách JSONP bên dưới.";
-        console.error(err);
-      }
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#121a33;
+      --muted:#9aa4b2;
+      --text:#e8eefc;
+      --line:rgba(255,255,255,.08);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 10% 0%, rgba(80,120,255,.25), transparent 60%),
+                  radial-gradient(900px 500px at 90% 10%, rgba(0,200,180,.18), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+    .wrap{max-width:1200px; margin:0 auto; padding:24px;}
+    .topbar{
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+      margin-bottom:18px;
+    }
+    .title{
+      display:flex; flex-direction:column; gap:4px;
+    }
+    .title h1{margin:0; font-size:20px; letter-spacing:.2px;}
+    .title .sub{color:var(--muted); font-size:12px;}
+    .actions{display:flex; gap:10px; align-items:center;}
+    .btn{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      box-shadow: var(--shadow);
+    }
+    .btn:hover{background: rgba(255,255,255,.10);}
+    .pill{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      padding:9px 12px;
+      border-radius:999px;
+      color:var(--muted);
+      font-size:12px;
+      display:flex; gap:8px; align-items:center;
+      max-width:520px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
     }
 
-    load();
-    // Nếu muốn tự refresh mỗi 5 phút:
-    // setInterval(load, 5 * 60 * 1000);
-  </script>
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:14px;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .card .hd{
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .card .hd .h{font-weight:600; font-size:13px;}
+    .card .hd .m{color:var(--muted); font-size:12px;}
+    .card .bd{padding:14px 16px;}
+    .kpi{
+      padding:14px 16px;
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .kpi .name{color:var(--muted); font-size:12px;}
+    .kpi .val{font-size:22px; font-weight:700;}
+    .kpi .hint{color:var(--muted); font-size:12px;}
+    .span-3{grid-column: span 3;}
+    .span-4{grid-column: span 4;}
+    .span-6{grid-column: span 6;}
+    .span-12{grid-column: span 12;}
+
+    .chartBox{height:340px;}
+    canvas{width:100% !important; height:100% !important;}
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:12px;
+    }
+    th, td{
+      padding:10px 10px;
+      border-bottom:1px solid var(--line);
+      text-align:left;
+      vertical-align:top;
+    }
+    th{color:var(--muted); font-weight:600;}
+    .note{color:var(--muted); font-size:12px; line-height:1.5;}
+    .error{
+      padding:12px 14px;
+      border-radius:12px;
+      background: rgba(255,90,90,.12);
+      border:1px solid rgba(255,90,90,.25);
+      color:#ffd7d7;
+      margin-top:12px;
+      white-space:pre-wrap;
+    }
+
+    @media (max-width: 1000px){
+      .span-3{grid-column: span 6;}
+      .span-6{grid-column: span 12;}
+      .span-4{grid-column: span 12;}
+      .topbar{flex-direction:column; align-items:flex-start;}
+      .actions{width:100%; justify-content:flex-start; flex-wrap:wrap;}
+      .pill{max-width:100%;}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="title">
+        <h1>Dashboard Report</h1>
+        <div class="sub" id="subtitle">Loading…</div>
+      </div>
+      <div class="actions">
+        <div class="pill" id="apiPill">API: (chưa set)</div>
+        <button class="btn" id="btnReload">Reload</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- KPI -->
+      <div class="card span-3 kpi">
+        <div class="name">Tổng chi phí</div>
+        <div class="val" id="kpiSpend">—</div>
+        <div class="hint" id="kpiSpendHint">—</div>
+      </div>
+      <div class="card span-3 kpi">
+        <div class="name">Tổng doanh thu</div>
+        <div class="val" id="kpiRevenue">—</div>
+        <div class="hint" id="kpiRevenueHint">—</div>
+      </div>
+      <div class="card span-3 kpi">
+        <div class="name">Đơn hàng</div>
+        <div class="val" id="kpiOrders">—</div>
+        <div class="hint" id="kpiOrdersHint">—</div>
+      </div>
+      <div class="card span-3 kpi">
+        <div class="name">ROAS</div>
+        <div class="val" id="kpiRoas">—</div>
+        <div class="hint">Doanh thu / Chi phí</div>
+      </div>
+
+      <!-- Charts -->
+      <div class="card span-6">
+        <div class="hd">
+          <div class="h">Xu hướng theo ngày</div>
+          <div class="m">Spend vs Revenue</div>
+        </div>
+        <div class="bd">
+          <div class="chartBox"><canvas id="trendChart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card span-6">
+        <div class="hd">
+          <div class="h">Top items</div>
+          <div class="m">Theo doanh thu</div>
+        </div>
+        <div class="bd">
+          <div class="chartBox"><canvas id="topChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="card span-12">
+        <div class="hd">
+          <div class="h">Dữ liệu thô (20 dòng đầu)</div>
+          <div class="m" id="rowCount">—</div>
+        </div>
+        <div class="bd">
+          <div class="note">
+            Nếu chart chưa đúng: hãy chỉnh mapping cột trong biến <b>FIELDS</b> bên dưới cho khớp JSON của bạn.
+          </div>
+          <div id="errBox"></div>
+          <div style="overflow:auto; margin-top:10px;">
+            <table id="dataTable"></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // 1) DÁN URL /exec CỦA BẠN VÀO ĐÂY
+  const API_URL = "PASTE_YOUR_APPS_SCRIPT_EXEC_URL_HERE";
+
+  // 2) MAP CỘT DỮ LIỆU (đổi theo JSON thực tế của bạn)
+  // Ví dụ JSON mỗi row có: { date: "2025-12-29", spend: 120, revenue: 560, orders: 3, item: "ASIN/Name" }
+  const FIELDS = {
+    date:    ["date", "Date", "ngay", "Ngày", "day"],
+    spend:   ["spend", "Spend", "cost", "Cost", "Chi phí", "chi_phi"],
+    revenue: ["revenue", "Revenue", "sales", "Sales", "Doanh thu", "doanh_thu"],
+    orders:  ["orders", "Orders", "order", "Đơn", "don_hang"],
+    item:    ["item", "Item", "asin", "ASIN", "name", "Name", "Tên"]
+  };
+
+  // ----- helpers
+  const $ = (id) => document.getElementById(id);
+
+  function pickField(obj, keys){
+    for (const k of keys){
+      if (obj && Object.prototype.hasOwnProperty.call(obj, k)) return obj[k];
+    }
+    return undefined;
+  }
+
+  function normalizeRows(json){
+    if (Array.isArray(json)) return json;
+    if (json && Array.isArray(json.rows)) return json.rows;
+    if (json && Array.isArray(json.data)) return json.data;
+    if (json && Array.isArray(json.items)) return json.items;
+    if (json && Array.isArray(json.records)) return json.records;
+    return [];
+  }
+
+  function toNumber(v){
+    if (v === null || v === undefined) return 0;
+    if (typeof v === "number") return isFinite(v) ? v : 0;
+    const s = String(v).replace(/,/g,"").trim();
+    const n = Number(s);
+    return isFinite(n) ? n : 0;
+  }
+
+  function toDayKey(v){
+    // chấp nhận: YYYY-MM-DD, DD/MM/YYYY, ISO string...
+    if (!v) return null;
+    const s = String(v).trim();
+    let d = new Date(s);
+    if (isNaN(d.getTime())){
+      // thử DD/MM/YYYY
+      const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (m){
+        d = new Date(Number(m[3]), Number(m[2])-1, Number(m[1]));
+      }
+    }
+    if (isNaN(d.getTime())) return null;
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  function fmtMoney(n){
+    return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 0 }).format(n);
+  }
+
+  function setError(msg){
+    $("errBox").innerHTML = msg ? `<div class="error">${msg}</div>` : "";
+  }
+
+  // ----- charts
+  let trendChart, topChart;
+
+  function renderTrend(labels, spendArr, revArr){
+    const ctx = $("trendChart");
+    if (trendChart) trendChart.destroy();
+
+    trendChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          { label: "Spend", data: spendArr, tension: 0.25 },
+          { label: "Revenue", data: revArr, tension: 0.25 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { labels: { color: "#e8eefc" } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: ${fmtMoney(ctx.raw)}`
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { color: "#9aa4b2" }, grid: { color: "rgba(255,255,255,.06)" } },
+          y: { ticks: { color: "#9aa4b2", callback: (v)=>fmtMoney(v) }, grid: { color: "rgba(255,255,255,.06)" } }
+        }
+      }
+    });
+  }
+
+  function renderTop(labels, values){
+    const ctx = $("topChart");
+    if (topChart) topChart.destroy();
+
+    topChart = new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [
+          { label: "Revenue", data: values, borderWidth: 1 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: "#e8eefc" } },
+          tooltip: {
+            callbacks: { label: (ctx) => `Revenue: ${fmtMoney(ctx.raw)}` }
+          }
+        },
+        scales: {
+          x: { ticks: { color: "#9aa4b2" }, grid: { display: false } },
+          y: { ticks: { color: "#9aa4b2", callback: (v)=>fmtMoney(v) }, grid: { color: "rgba(255,255,255,.06)" } }
+        }
+      }
+    });
+  }
+
+  function renderTable(rows){
+    const table = $("dataTable");
+    table.innerHTML = "";
+    if (!rows.length){
+      table.innerHTML = "<tr><td>Không có dữ liệu</td></tr>";
+      return;
+    }
+
+    const keys = Object.keys(rows[0]);
+    const thead = document.createElement("thead");
+    const trh = document.createElement("tr");
+    keys.forEach(k => {
+      const th = document.createElement("th");
+      th.textContent = k;
+      trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+
+    const tbody = document.createElement("tbody");
+    rows.slice(0, 20).forEach(r => {
+      const tr = document.createElement("tr");
+      keys.forEach(k => {
+        const td = document.createElement("td");
+        const v = r[k];
+        td.textContent = (v === null || v === undefined) ? "" : String(v);
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+  }
+
+  // ----- main load
+  async function load(){
+    $("apiPill").textContent = "API: " + API_URL;
+    setError("");
+
+    if (!API_URL || API_URL.includes("PASTE_")){
+      setError("Bạn chưa dán API_URL (/exec) vào index.html.");
+      return;
+    }
+
+    $("subtitle").textContent = "Đang tải dữ liệu…";
+
+    try{
+      const res = await fetch(API_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const json = await res.json();
+
+      const rows = normalizeRows(json);
+      $("rowCount").textContent = `${rows.length} rows`;
+
+      // Parse rows -> metrics
+      let spendTotal = 0, revTotal = 0, ordersTotal = 0;
+      const byDay = new Map();      // day -> {spend, rev}
+      const byItem = new Map();     // item -> revenue
+
+      for (const r of rows){
+        const day = toDayKey(pickField(r, FIELDS.date));
+        const spend = toNumber(pickField(r, FIELDS.spend));
+        const rev = toNumber(pickField(r, FIELDS.revenue));
+        const orders = toNumber(pickField(r, FIELDS.orders));
+        const item = pickField(r, FIELDS.item) ?? "Unknown";
+
+        spendTotal += spend;
+        revTotal += rev;
+        ordersTotal += orders;
+
+        if (day){
+          const cur = byDay.get(day) || { spend:0, rev:0 };
+          cur.spend += spend;
+          cur.rev += rev;
+          byDay.set(day, cur);
+        }
+        byItem.set(String(item), (byItem.get(String(item)) || 0) + rev);
+      }
+
+      // KPIs
+      $("kpiSpend").textContent = fmtMoney(spendTotal);
+      $("kpiRevenue").textContent = fmtMoney(revTotal);
+      $("kpiOrders").textContent = fmtMoney(ordersTotal);
+      $("kpiRoas").textContent = spendTotal > 0 ? (revTotal / spendTotal).toFixed(2) : "—";
+      $("kpiSpendHint").textContent = "VNĐ (sum)";
+      $("kpiRevenueHint").textContent = "VNĐ (sum)";
+      $("kpiOrdersHint").textContent = "Tổng";
+
+      // Trend chart (sorted by day)
+      const days = Array.from(byDay.keys()).sort();
+      const spendArr = days.map(d => byDay.get(d).spend);
+      const revArr = days.map(d => byDay.get(d).rev);
+      renderTrend(days, spendArr, revArr);
+
+      // Top items chart (top 10)
+      const top = Array.from(byItem.entries())
+        .sort((a,b)=>b[1]-a[1])
+        .slice(0,10);
+      renderTop(top.map(x=>x[0]), top.map(x=>x[1]));
+
+      renderTable(rows);
+
+      const now = new Date();
+      $("subtitle").textContent = `Cập nhật: ${now.toLocaleString("vi-VN")}`;
+
+    }catch(err){
+      setError(
+        "Fetch lỗi: " + err.message +
+        "\n\nNếu bạn thấy lỗi CORS trong Console: chuyển sang JSONP (tôi sẽ đưa đúng 2 đoạn code Apps Script + index.html)."
+      );
+      $("subtitle").textContent = "Lỗi tải dữ liệu";
+      console.error(err);
+    }
+  }
+
+  $("btnReload").addEventListener("click", load);
+  load();
+</script>
 </body>
 </html>
